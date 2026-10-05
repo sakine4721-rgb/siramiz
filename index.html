@@ -63,6 +63,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,.btn:focus-within{
 footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
 @media print{.bar,.panel,.r2,.brand,#msg,.x{display:none!important}body{background:#fff;color:#000}.room{overflow:visible}.phead{display:block}}
 </style>
+<style id="pgst"></style>
 </head>
 <body>
 <div id="pwrap"><img id="pimg" alt="Oturma düzeni"></div>
@@ -77,8 +78,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
   <div><h1>Sıramız</h1><p>Fotoğraflı sınıf oturma düzeni</p></div>
 </div>
 <div class="r2"><input type="text" id="school" placeholder="Okul adı" aria-label="Okul adı"><input type="text" id="teacher" placeholder="Öğretmen adı" aria-label="Öğretmen adı"></div>
-<div class="r2"><select id="cls" aria-label="Sınıf seç"></select><input type="text" id="title" class="title" aria-label="Sınıf adı"></div>
-<div class="bar"><button id="newc" type="button" class="p">+ Yeni sınıf</button><button id="delc" type="button">Sınıfı sil</button></div>
+<div class="r2" id="r2c"><select id="cls" aria-label="Sınıf seç"></select><input type="text" id="title" class="title" aria-label="Sınıf adı"></div>
 <div class="panel">
   <div class="st" data-k="cols" data-min="1" data-max="8"><span>Sıra grubu (sütun) sayısı</span><button type="button" aria-label="Azalt">−</button><b class="v"></b><button type="button" aria-label="Artır">+</button></div>
   <div class="st" data-k="rows" data-min="1" data-max="10"><span>Sıra (satır) sayısı</span><button type="button" aria-label="Azalt">−</button><b class="v"></b><button type="button" aria-label="Artır">+</button></div>
@@ -152,10 +152,11 @@ function shrink(file,cb){
   fr.onerror=function(){say("Fotoğraf okunamadı: "+file.name)};
   fr.onload=function(){var im=new Image();
     im.onerror=function(){cb(fr.result)};
-    im.onload=function(){var s=Math.min(1,260/Math.max(im.width,im.height));
-      var c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
-      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
-      try{cb(c.toDataURL("image/jpeg",0.72))}catch(e){cb(fr.result)}};
+    im.onload=function(){var W=240,H=320,ar=W/H,sw=im.width,sh=im.height,sx=0,sy=0;
+      if(sw/sh>ar){var nw=sh*ar;sx=(sw-nw)/2;sw=nw}else{var nh=sw/ar;sy=(sh-nh)*0.2;sh=nh}
+      var c=document.createElement("canvas");c.width=W;c.height=H;
+      c.getContext("2d").drawImage(im,sx,sy,sw,sh,0,0,W,H);
+      try{cb(c.toDataURL("image/jpeg",0.78))}catch(e){cb(fr.result)}};
     im.src=fr.result};
   fr.readAsDataURL(file)}
 function dl(blob,name){var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;
@@ -203,7 +204,7 @@ function render(){
   theme();
   sel.innerHTML="";
   S.classes.forEach(function(x,j){var o=document.createElement("option");o.value=j;o.textContent=x.name||"Sınıf";sel.appendChild(o)});
-  sel.value=S.cur;
+  sel.value=S.cur;sel.hidden=S.classes.length<2;$("r2c").style.gridTemplateColumns=S.classes.length<2?"1fr":"1fr 1fr";
   $("title").value=c.name;$("school").value=S.school;$("teacher").value=S.teacher;
   $("pano").checked=S.pano;$("lp").value=S.lp;$("lt").value=S.lt;$("lb").value=S.lb;$("cn").value=c.name;$("win").value=S.win;$("thm").value=S.theme;
   Array.prototype.forEach.call(document.querySelectorAll(".st"),function(st){st.querySelector(".v").textContent=c[st.dataset.k]});
@@ -274,12 +275,15 @@ function printPng(){
   say("Yazdırma için hazırlanıyor…");
   drawCanvas(function(cv){
     if(!cv){say("Hazırlanamadı. Resim olarak indirip yazdırabilirsiniz.");return}
-    var im=$("pimg");
+    var land=cv.width>=cv.height,im=$("pimg");
+    $("pgst").textContent="@media print{@page{size:A4 "+(land?"landscape":"portrait")+";margin:8mm}#pwrap img{max-height:"+(land?"192mm":"279mm")+"}}";
     im.onload=function(){document.body.classList.add("printing");say("");
-      setTimeout(function(){try{window.print()}catch(e){document.body.classList.remove("printing");say("Yazdırma açılamadı. Resim olarak indirip yazdırabilirsiniz.")}},150)};
-    im.removeAttribute("src");im.src=cv.toDataURL("image/png")})
+      setTimeout(function(){
+        try{window.print()}catch(e){say("Yazdırma açılamadı. Resim olarak indirip yazdırabilirsiniz.")}
+        document.addEventListener("pointerdown",function f(){document.body.classList.remove("printing");document.removeEventListener("pointerdown",f)})
+      },300)};
+    im.removeAttribute("src");im.src=cv.toDataURL("image/jpeg",0.92)})
 }
-window.addEventListener("afterprint",function(){document.body.classList.remove("printing")});
 
 Array.prototype.forEach.call(document.querySelectorAll(".st"),function(st){
   var k=st.dataset.k,mn=+st.dataset.min,mx=+st.dataset.max,bs=st.querySelectorAll("button");
@@ -299,14 +303,6 @@ $("title").addEventListener("input",function(){setName(this.value,this)});
 $("cn").addEventListener("input",function(){setName(this.value,this)});
 $("lb").addEventListener("input",function(){S.lb=this.value;save()});
 $("cls").addEventListener("change",function(){S.cur=+this.value;prev=null;$("undo").hidden=true;picked=null;save();render()});
-$("newc").addEventListener("click",function(){var c=cur();
-  S.classes.push(mk("Sınıf "+(S.classes.length+1),c.cols,c.rows,c.per));S.cur=S.classes.length-1;
-  prev=null;$("undo").hidden=true;save();render();say("Yeni sınıf eklendi. Adını yukarıdan değiştirebilirsiniz.")});
-$("delc").addEventListener("click",function(){var b=this;
-  if(S.classes.length<2){say("Son sınıf silinemez.");return}
-  if(!armDel){armDel=true;b.textContent="Emin misiniz? Tekrar dokunun";
-    setTimeout(function(){armDel=false;b.textContent="Sınıfı sil"},4000);return}
-  armDel=false;b.textContent="Sınıfı sil";S.classes.splice(S.cur,1);S.cur=0;prev=null;save();render();say("Sınıf silindi.")});
 $("lp").addEventListener("input",function(){S.lp=this.value;save()});
 $("lt").addEventListener("input",function(){S.lt=this.value;save()});
 $("pano").addEventListener("change",function(){S.pano=this.checked;save();render()});
@@ -317,6 +313,7 @@ $("multi").addEventListener("change",function(){
   var inp=this,fs=Array.prototype.slice.call(inp.files||[]),free=[],c=cur();
   c.seats.forEach(function(s,i){if(!s.photo)free.push(i)});
   if(!fs.length)return;
+  fs.sort(function(a,b){return a.name.localeCompare(b.name,"tr",{numeric:true})});
   var use=fs.slice(0,free.length),left=use.length;
   if(!left){say("Boş kutu yok. Sıra sayısını artırabilirsiniz.");return}
   say(left+" fotoğraf yerleştiriliyor…");
