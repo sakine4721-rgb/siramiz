@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="author" content="Sakine">
+<meta name="copyright" content="© 2026 Sakine. Tüm hakları saklıdır.">
+<title>Sıramız – Sınıf Oturma Düzeni</title>
+<style>
+:root{--bg:#eef1f4;--ink:#1f2933;--muted:#5d6b78;--board:#2f5d50;--desk:#d9b98a;--desk-edge:#b8935f;--card:#fff;--line:#c9d1d9;--accent:#2f5d50}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;padding:14px;padding-top:max(14px,env(safe-area-inset-top));padding-bottom:max(14px,env(safe-area-inset-bottom))}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.brand svg{width:52px;height:52px;flex:none}
+.brand h1{margin:0;font-size:1.6rem;font-weight:800;line-height:1.1;color:var(--accent)}
+.brand p{margin:2px 0 0;font-size:.85rem;color:var(--muted)}
+.title{font:800 1.15rem inherit;font-family:inherit;width:100%;border:0;border-bottom:2px solid var(--line);background:transparent;color:var(--ink);padding:4px 0;margin-bottom:10px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+button,select,.btn{font:inherit;font-weight:700;font-size:.9rem;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:inline-block;position:relative;overflow:hidden}
+.p,button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.fin{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+button:focus-visible,select:focus-visible,.seat:focus-within,.btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+#msg{min-height:1.3em;color:var(--muted);font-size:.85rem;margin-bottom:8px}
+.room{overflow-x:auto;padding-bottom:8px}
+.floor{max-width:980px;margin:0 auto}
+.front{display:flex;gap:10px;margin-bottom:14px}
+.board{flex:1;background:var(--board);color:#e6f2ee;text-align:center;padding:10px;border-radius:6px;font-weight:800;letter-spacing:.05em}
+.tdesk{width:28%;background:var(--desk);border:2px solid var(--desk-edge);border-radius:6px;text-align:center;padding:10px 4px;font-weight:700;color:#3b2d17;font-size:.85rem}
+.layout{display:grid;gap:12px 20px}
+.grp{display:grid;gap:5px;background:var(--desk);border:2px solid var(--desk-edge);padding:5px;border-radius:8px}
+.seat{position:relative;background:var(--card);border-radius:6px;padding:5px;text-align:center;min-width:0}
+.seat.over{outline:3px dashed var(--accent)}
+.seat.sel{outline:3px solid #e0a100}
+.ph{aspect-ratio:3/4;width:100%;border-radius:4px;background:var(--bg) center/cover no-repeat;border:1px dashed var(--line);display:grid;place-items:center;color:var(--muted);position:relative;overflow:hidden}
+.ph b{font-size:1.5rem}
+.no{position:absolute;top:3px;left:4px;font-size:.7rem;font-weight:800;color:var(--muted);background:var(--card);border-radius:4px;padding:0 4px;pointer-events:none}
+.nm{width:100%;margin-top:4px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:.78rem;text-align:center;padding:2px}
+.x{position:absolute;top:2px;right:2px;z-index:2;padding:0 7px;font-size:.9rem;border-radius:50%}
+.wide{min-width:560px}
+footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
+@media print{.bar,#msg,.x,.brand p{display:none}body{background:#fff;color:#000}.room{overflow:visible}.title{border:0}}
+</style>
+</head>
+<body>
+<div class="brand">
+  <svg viewBox="0 0 64 64" role="img" aria-label="Sıramız logosu">
+    <rect width="64" height="64" rx="14" fill="#2f5d50"/>
+    <rect x="12" y="9" width="40" height="7" rx="2" fill="#e6f2ee"/>
+    <g fill="#d9b98a"><rect x="11" y="24" width="20" height="14" rx="3"/><rect x="33" y="24" width="20" height="14" rx="3"/><rect x="11" y="43" width="20" height="14" rx="3"/><rect x="33" y="43" width="20" height="14" rx="3"/></g>
+    <g fill="#fff"><circle cx="21" cy="31" r="4.5"/><circle cx="43" cy="31" r="4.5"/><circle cx="21" cy="50" r="4.5"/></g>
+    <circle cx="43" cy="50" r="4.5" fill="#f2b632"/>
+  </svg>
+  <div><h1>Sıramız</h1><p>Fotoğraflı sınıf oturma düzeni</p></div>
+</div>
+<input id="title" class="title" value="Sınıf Oturma Düzeni" aria-label="Sınıf adı">
+<div class="bar">
+  <select id="lay" aria-label="Düzen">
+    <option value="iki">İkili sıralar (3×5)</option>
+    <option value="tekli">Tekli sıralar (6×5)</option>
+    <option value="grup">Gruplu (5 masa × 6)</option>
+  </select>
+  <label class="btn p">Toplu fotoğraf ekle<input id="multi" class="fin" type="file" accept="image/*" multiple></label>
+  <button id="swap" type="button">Yer değiştir: kapalı</button>
+  <button id="png" type="button">Resim olarak indir</button>
+  <button id="print" type="button">Yazdır / PDF</button>
+  <button id="clear" type="button">Temizle</button>
+</div>
+<div id="msg" role="status">Yükleniyor…</div>
+<noscript>Bu uygulama için JavaScript gereklidir.</noscript>
+<div class="room"><div class="floor" id="floor">
+  <div class="front"><div class="board" id="board">TAHTA</div><div class="tdesk" id="tdesk">Öğretmen masası</div></div>
+  <div id="layout" class="layout"></div>
+</div></div>
+<footer>© 2026 Sakine. Tüm hakları saklıdır. Fotoğraflar yalnızca kendi cihazınızda kalır, hiçbir yere yüklenmez.</footer>
+<script>
+(function(){
+var N=30,KEY="siramiz-v1",seats=[],swapMode=false,picked=null,dragFrom=null,clearArm=false,saveT=null;
+var L=document.getElementById("layout"),msg=document.getElementById("msg"),
+    titleEl=document.getElementById("title"),layEl=document.getElementById("lay"),floor=document.getElementById("floor");
+try{var sv=document.querySelector(".brand svg").outerHTML.replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');
+  var ic=document.createElement("link");ic.rel="icon";ic.href="data:image/svg+xml,"+encodeURIComponent(sv);document.head.appendChild(ic)}catch(e){}
+function say(t){msg.textContent=t}
+function blank(){var a=[];for(var i=0;i<N;i++)a.push({photo:"",name:""});return a}
+seats=blank();
+function load(){try{var r=localStorage.getItem(KEY);if(!r)return;var d=JSON.parse(r);
+  if(d.seats&&d.seats.length===N)seats=d.seats;if(d.title)titleEl.value=d.title;if(d.lay)layEl.value=d.lay}catch(e){}}
+function save(){clearTimeout(saveT);saveT=setTimeout(function(){
+  try{localStorage.setItem(KEY,JSON.stringify({seats:seats,title:titleEl.value,lay:layEl.value}))}
+  catch(e){say("Tarayıcı kaydedemedi. Düzeni PDF veya resim olarak saklayın.")}},400)}
+function shrink(file,cb){
+  var fr=new FileReader();
+  fr.onerror=function(){say("Fotoğraf okunamadı: "+file.name)};
+  fr.onload=function(){var im=new Image();
+    im.onerror=function(){cb(fr.result)};
+    im.onload=function(){var m=360,s=Math.min(1,m/Math.max(im.width,im.height));
+      var c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      try{cb(c.toDataURL("image/jpeg",0.8))}catch(e){cb(fr.result)}};
+    im.src=fr.result};
+  fr.readAsDataURL(file)}
+function swapSeats(a,b){var t=seats[a];seats[a]=seats[b];seats[b]=t;save();render()}
+
+function seatEl(i){
+  var s=seats[i],d=document.createElement("div");
+  d.className="seat"+(picked===i?" sel":"");d.dataset.i=i;
+  if(window.matchMedia&&matchMedia("(pointer:fine)").matches)d.draggable=true;
+  var ph=document.createElement("div");ph.className="ph";
+  if(s.photo)ph.style.backgroundImage="url("+s.photo+")";else ph.innerHTML="<b>+</b>";
+  var no=document.createElement("span");no.className="no";no.textContent=i+1;ph.appendChild(no);
+  var inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.className="fin";
+  inp.setAttribute("aria-label",(i+1)+". öğrenci fotoğrafı seç");
+  inp.addEventListener("change",function(){var f=inp.files&&inp.files[0];if(!f)return;
+    shrink(f,function(u){seats[i].photo=u;save();render()})});
+  inp.addEventListener("click",function(e){
+    if(!swapMode)return;e.preventDefault();
+    if(picked===null){picked=i;say((i+1)+". kutu seçildi. Yerini değiştireceğiniz kutuya dokunun.");render()}
+    else if(picked===i){picked=null;say("");render()}
+    else{var a=picked;picked=null;say((a+1)+" ile "+(i+1)+". kutular yer değiştirdi.");swapSeats(a,i)}});
+  ph.appendChild(inp);d.appendChild(ph);
+  var nm=document.createElement("input");nm.className="nm";nm.placeholder="Ad Soyad";nm.value=s.name;
+  nm.setAttribute("aria-label",(i+1)+". öğrenci adı");
+  nm.addEventListener("input",function(){seats[i].name=nm.value;save()});d.appendChild(nm);
+  if(s.photo){var x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";
+    x.setAttribute("aria-label","Fotoğrafı kaldır");
+    x.addEventListener("click",function(){seats[i].photo="";save();render()});d.appendChild(x)}
+  d.addEventListener("dragstart",function(){dragFrom=i});
+  d.addEventListener("dragover",function(e){e.preventDefault();d.classList.add("over")});
+  d.addEventListener("dragleave",function(){d.classList.remove("over")});
+  d.addEventListener("drop",function(e){e.preventDefault();if(dragFrom!==null&&dragFrom!==i)swapSeats(dragFrom,i);dragFrom=null});
+  return d}
+function group(idx,cols){var g=document.createElement("div");g.className="grp";
+  g.style.gridTemplateColumns="repeat("+cols+",1fr)";idx.forEach(function(i){g.appendChild(seatEl(i))});return g}
+function render(){
+  var t=layEl.value,g,r,k,b,a;L.innerHTML="";
+  floor.className="floor"+(t==="tekli"?" wide":"");
+  L.style.gap=t==="tekli"?"12px 8px":t==="grup"?"20px 20px":"12px 20px";
+  if(t==="iki"){L.style.gridTemplateColumns="repeat(3,1fr)";
+    for(r=0;r<5;r++)for(g=0;g<3;g++){b=r*6+g*2;L.appendChild(group([b,b+1],2))}}
+  else if(t==="tekli"){L.style.gridTemplateColumns="repeat(6,1fr)";
+    for(k=0;k<N;k++)L.appendChild(group([k],1))}
+  else{L.style.gridTemplateColumns="repeat(3,1fr)";
+    for(g=0;g<5;g++){a=[];for(k=0;k<6;k++)a.push(g*6+k);L.appendChild(group(a,3))}}}
+
+function exportPng(){
+  try{
+    var S=2,fr=floor.getBoundingClientRect(),top=56,W=Math.round(fr.width),H=Math.round(fr.height)+top+28;
+    var c=document.createElement("canvas");c.width=W*S;c.height=H*S;var x=c.getContext("2d");x.scale(S,S);
+    x.fillStyle="#fff";x.fillRect(0,0,W,H);
+    var F='"Nunito","Segoe UI",system-ui,sans-serif';
+    x.fillStyle="#2f5d50";x.font="800 24px "+F;x.textAlign="center";x.fillText(titleEl.value||"Sınıf Oturma Düzeni",W/2,36);
+    function rel(el){var r=el.getBoundingClientRect();return{x:r.left-fr.left,y:r.top-fr.top+top,w:r.width,h:r.height}}
+    function box(el,fill,stroke,rad){var r=rel(el);x.beginPath();x.roundRect?x.roundRect(r.x,r.y,r.w,r.h,rad):x.rect(r.x,r.y,r.w,r.h);
+      x.fillStyle=fill;x.fill();if(stroke){x.strokeStyle=stroke;x.lineWidth=2;x.stroke()}return r}
+    var b=box(document.getElementById("board"),"#2f5d50",null,6);
+    x.fillStyle="#e6f2ee";x.font="800 15px "+F;x.fillText("TAHTA",b.x+b.w/2,b.y+b.h/2+5);
+    var t=box(document.getElementById("tdesk"),"#d9b98a","#b8935f",6);
+    x.fillStyle="#3b2d17";x.font="700 13px "+F;x.fillText("Öğretmen masası",t.x+t.w/2,t.y+t.h/2+4);
+    Array.prototype.forEach.call(L.querySelectorAll(".grp"),function(g){box(g,"#d9b98a","#b8935f",8)});
+    var jobs=[];
+    Array.prototype.forEach.call(L.querySelectorAll(".seat"),function(se){
+      var i=+se.dataset.i,s=seats[i],sr=box(se,"#fff",null,6),pr=rel(se.querySelector(".ph"));
+      var nmEl=se.querySelector(".nm"),nr=rel(nmEl);
+      x.fillStyle="#eef1f4";x.fillRect(pr.x,pr.y,pr.w,pr.h);
+      x.fillStyle="#1f2933";x.font="700 "+Math.max(9,Math.min(13,pr.w/7))+"px "+F;x.textAlign="center";
+      x.fillText(s.name,nr.x+nr.w/2,nr.y+nr.h/2+4,nr.w);
+      x.fillStyle="#5d6b78";x.font="800 10px "+F;x.textAlign="left";x.fillText(String(i+1),pr.x+4,pr.y+12);
+      if(s.photo)jobs.push(new Promise(function(ok){var im=new Image();im.onload=function(){
+        var ar=pr.w/pr.h,sw=im.width,sh=im.height,sx=0,sy=0;
+        if(sw/sh>ar){var nw=sh*ar;sx=(sw-nw)/2;sw=nw}else{var nh=sw/ar;sy=(sh-nh)/2;sh=nh}
+        x.drawImage(im,sx,sy,sw,sh,pr.x,pr.y,pr.w,pr.h);
+        x.fillStyle="rgba(255,255,255,.85)";x.fillRect(pr.x+2,pr.y+2,16,14);
+        x.fillStyle="#1f2933";x.font="800 10px "+F;x.textAlign="left";x.fillText(String(i+1),pr.x+5,pr.y+13);ok()};
+        im.onerror=ok;im.src=s.photo}))});
+    Promise.all(jobs).then(function(){
+      x.fillStyle="#5d6b78";x.font="12px "+F;x.textAlign="center";x.fillText("© 2026 Sakine – Sıramız",W/2,H-10);
+      c.toBlob(function(bl){var a=document.createElement("a");a.href=URL.createObjectURL(bl);
+        a.download=(titleEl.value||"oturma-duzeni").replace(/[^\wığüşöçİĞÜŞÖÇ -]+/g,"")+".png";
+        document.body.appendChild(a);a.click();a.remove();say("Resim indirildi.")},"image/png")});
+  }catch(e){say("Resim oluşturulamadı. Yazdır / PDF seçeneğini deneyin.")}}
+
+document.getElementById("multi").addEventListener("change",function(){
+  var inp=this,fs=Array.prototype.slice.call(inp.files||[]),free=[];
+  seats.forEach(function(s,i){if(!s.photo)free.push(i)});
+  if(!fs.length)return;
+  var use=fs.slice(0,free.length),left=use.length;
+  say(use.length+" fotoğraf yerleştiriliyor…");
+  use.forEach(function(f,k){shrink(f,function(u){var s=seats[free[k]];s.photo=u;
+    if(!s.name)s.name=f.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ");
+    if(--left===0){save();render();say(use.length+" fotoğraf eklendi.")}})});
+  inp.value=""});
+layEl.addEventListener("change",function(){save();render()});
+titleEl.addEventListener("input",save);
+document.getElementById("swap").addEventListener("click",function(){
+  swapMode=!swapMode;picked=null;this.textContent="Yer değiştir: "+(swapMode?"açık":"kapalı");
+  this.className=swapMode?"on":"";say(swapMode?"İki kutuya sırayla dokunarak yerlerini değiştirin.":"");render()});
+document.getElementById("png").addEventListener("click",exportPng);
+document.getElementById("print").addEventListener("click",function(){
+  try{window.print()}catch(e){say("Yazdırma açılamadı. Resim olarak indirmeyi deneyin.")}});
+document.getElementById("clear").addEventListener("click",function(){
+  var b=this;
+  if(!clearArm){clearArm=true;b.textContent="Emin misiniz? Tekrar dokunun";
+    setTimeout(function(){clearArm=false;b.textContent="Temizle"},4000);return}
+  clearArm=false;b.textContent="Temizle";seats=blank();save();say("Tüm kutular temizlendi.");render()});
+load();render();
+say("Hazır. Bir kutudaki + işaretine dokunarak fotoğraf ekleyin. Veriler yalnızca bu cihazda saklanır.");
+})();
+</script>
+</body>
+</html>
