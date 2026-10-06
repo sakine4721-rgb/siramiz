@@ -38,11 +38,15 @@ button:focus-visible,select:focus-visible,input:focus-visible,.btn:focus-within{
 .win{flex:1;max-height:90px;background:#bfe3f5;border:2px solid #7fb3cf;border-radius:3px}
 .front{display:flex;gap:8px;margin-bottom:12px}
 .pano{flex:1;background:#c9a06b;border:2px solid #9a7440;border-radius:6px;text-align:center;padding:10px 4px;font-weight:800;color:#4a3414;font-size:.8rem}
-.board{flex:2.2;background:var(--bd);color:#e6f2ee;text-align:center;padding:10px;border-radius:6px;font-weight:800;letter-spacing:.05em}
+.board{order:1;flex:2.2;background:var(--bd);color:#e6f2ee;text-align:center;padding:10px;border-radius:6px;font-weight:800;letter-spacing:.05em}
 .tdesk{flex:1.2;background:var(--d);border:2px solid var(--de);border-radius:6px;text-align:center;padding:10px 4px;font-weight:700;color:#3b2d17;font-size:.8rem}
 .floor .lbl{letter-spacing:inherit;width:100%;border:0;background:transparent;text-align:center;font:inherit;color:inherit;padding:0;min-width:0;border-radius:4px}
 .floor .lbl:focus{background:rgba(255,255,255,.55)}
 .cname{width:50%;min-width:170px;margin:0 auto 10px;background:var(--a);color:#fff;border-radius:8px;padding:6px 12px;font-weight:800;font-size:1.05rem;text-align:center}
+.front.back{margin:12px 0 0;justify-content:center}
+.front.back:empty{display:none}
+.back .pano,.back .tdesk{flex:0 1 38%}
+footer a{color:var(--a)}
 .layout{display:grid;gap:12px 14px}
 .grp{display:grid;gap:5px;background:var(--d);border:2px solid var(--de);padding:5px;border-radius:8px}
 .seat{position:relative;background:var(--card);border-radius:6px;padding:4px;text-align:center;min-width:0}
@@ -55,17 +59,23 @@ button:focus-visible,select:focus-visible,input:focus-visible,.btn:focus-within{
 .nm,.nt{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;text-align:center;padding:2px;min-width:0}
 .nm{margin-top:4px;font-size:.78rem}
 .nt{font-size:.68rem;color:var(--muted)}
-.x{position:absolute;top:2px;right:2px;z-index:2;padding:0 7px;font-size:.9rem;border-radius:50%}
+.x{position:absolute;bottom:3px;right:3px;z-index:2;padding:0 7px;font-size:.9rem;border-radius:50%}
+.rp{position:absolute;top:3px;right:3px;z-index:2;padding:1px 5px;font-size:.85rem;border-radius:6px;background:rgba(255,255,255,.92);overflow:hidden;cursor:pointer}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:14px}
+#ov img{max-width:100%;max-height:66vh;background:#fff;border-radius:6px}
+#ov .bar{justify-content:center;margin:0}
+#ov p{color:#fff;font-size:.85rem;text-align:center;margin:0}
 .phead{display:none;text-align:center;margin-bottom:8px}
 .phead div:nth-child(2){font-size:1.4rem;font-weight:800}
 #pwrap{display:none}
-@media print{@page{margin:8mm}body.printing{padding:0;background:#fff}body.printing>*:not(#pwrap){display:none!important}body.printing #pwrap{display:block}#pwrap img{display:block;width:100%;height:auto;max-height:272mm;object-fit:contain;margin:0 auto}}
+@media print{@page{margin:8mm}body.printing{padding:0;background:#fff}body.printing>*:not(#pwrap){display:none!important}body.printing #pwrap{display:block}#pwrap img{display:block;width:100%;height:auto;margin:0 auto}}
 footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
-@media print{.bar,.panel,.r2,.brand,#msg,.x{display:none!important}body{background:#fff;color:#000}.room{overflow:visible}.phead{display:block}}
+@media print{.bar,.panel,.r2,.brand,#msg,.x,.rp,#ov{display:none!important}body{background:#fff;color:#000}.room{overflow:visible}.phead{display:block}}
 </style>
 <style id="pgst"></style>
 </head>
 <body>
+<div id="ov" hidden><img id="oimg" alt="Oturma düzeni"><div class="bar"><button id="osh" type="button" class="p" hidden>Paylaş / Fotoğraflara kaydet</button><button id="odl" type="button">İndir</button><button id="ocl" type="button">Kapat</button></div><p>iPhone'da: resme uzun basıp "Fotoğraflara Ekle"yi seçin.</p></div>
 <div id="pwrap"><img id="pimg" alt="Oturma düzeni"></div>
 <div class="brand">
   <svg viewBox="0 0 64 64" role="img" aria-label="Sıramız logosu">
@@ -86,7 +96,9 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
   <div id="tot"></div>
   <div class="bar" style="margin:8px 0 0">
     <select id="win" aria-label="Pencere"><option value="sol">Pencere: sol</option><option value="sag">Pencere: sağ</option><option value="yok">Pencere yok</option></select>
-    <label class="chk"><input type="checkbox" id="pano"> Pano</label>
+    <select id="pp" aria-label="Pano yeri"><option value="sol">Pano: tahtanın solu</option><option value="sag">Pano: tahtanın sağı</option><option value="arka">Pano: sınıfın arkası</option><option value="yok">Pano yok</option></select>
+    <select id="tp" aria-label="Öğretmen masası yeri"><option value="sol">Öğretmen masası: solda</option><option value="sag">Öğretmen masası: sağda</option><option value="arka">Öğretmen masası: arkada</option><option value="yok">Öğretmen masası yok</option></select>
+    <select id="ori" aria-label="Çıktı yönü"><option value="dik">Çıktı: A4 dikey</option><option value="yat">Çıktı: A4 yatay</option><option value="oto">Çıktı: otomatik</option></select>
     <select id="thm" aria-label="Renk teması"><option value="yesil">Yeşil tema</option><option value="mavi">Mavi tema</option><option value="mor">Mor tema</option><option value="turuncu">Turuncu tema</option></select>
   </div>
 </div>
@@ -94,7 +106,6 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
   <label class="btn p">Toplu fotoğraf ekle<input id="multi" class="fin" type="file" accept="image/*" multiple></label>
   <button id="shuf" type="button">Rastgele yerleştir</button>
   <button id="undo" type="button" hidden>Geri al</button>
-  <button id="swap" type="button">Yer değiştir: kapalı</button>
 </div>
 <div class="bar">
   <button id="png" type="button">Resim olarak indir</button>
@@ -110,22 +121,23 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
   <div class="main">
     <div class="phead" id="phead"></div>
     <div class="cname fx" data-k="cname"><input type="text" id="cn" class="lbl" maxlength="30" aria-label="Sınıf adı levhası" placeholder="Sınıf adı"></div>
-    <div class="front">
+    <div class="front" id="frontRow">
       <div class="pano fx" id="panoEl" data-k="pano"><input type="text" id="lp" class="lbl" maxlength="24" aria-label="Pano yazısı"></div>
       <div class="board fx" data-k="board"><input type="text" id="lb" class="lbl" maxlength="24" aria-label="Tahta yazısı"></div>
-      <div class="tdesk fx" data-k="tdesk"><input type="text" id="lt" class="lbl" maxlength="24" aria-label="Öğretmen masası yazısı"></div>
+      <div class="tdesk fx" id="tdeskEl" data-k="tdesk"><input type="text" id="lt" class="lbl" maxlength="24" aria-label="Öğretmen masası yazısı"></div>
     </div>
     <div id="layout" class="layout"></div>
+    <div class="front back" id="backRow"></div>
   </div>
   <div class="winc" id="wr"></div>
 </div></div>
-<footer>© 2026 Sakine. Tüm hakları saklıdır. Fotoğraflar yalnızca kendi cihazınızda kalır, hiçbir yere yüklenmez.</footer>
+<footer>© 2026 Sakine. Tüm hakları saklıdır.<br>Fotoğraflar yalnızca bu cihazda, bu sekme açıkken tutulur ve hiçbir yere yüklenmez. Sekmeyi kapatınca silinir. Saklamak için <b>Yedekle</b> veya <b>Resim olarak indir</b> düğmesini kullanın.<br><a href="#" id="dlapp">Uygulamayı indir (internetsiz kullanım)</a></footer>
 <script>
 (function(){
 var KEY="siramiz-v2";
 var T={yesil:{a:"#2f5d50",bd:"#2f5d50",d:"#d9b98a",de:"#b8935f"},mavi:{a:"#2b5c8a",bd:"#25496b",d:"#cfc3a8",de:"#a89a78"},
   mor:{a:"#6b4a8e",bd:"#4a3566",d:"#dcc7a0",de:"#b39a6b"},turuncu:{a:"#c25a1a",bd:"#3c4a45",d:"#e0c08a",de:"#b8935f"}};
-var S={classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA"};
+var S={classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik"};
 var prev=null,swapMode=false,picked=null,dragFrom=null,armDel=false,armClr=false,saveT=null;
 function $(i){return document.getElementById(i)}
 function say(t){$("msg").textContent=t}
@@ -134,18 +146,15 @@ function fit(c){var n=c.cols*c.rows*c.per;while(c.seats.length<n)c.seats.push(b1
 function mk(name,cols,rows,per,old){var c={name:name,cols:cols,rows:rows,per:per,seats:old||[]};fit(c);return c}
 function cur(){return S.classes[S.cur]}
 function load(){
-  try{
-    var r=localStorage.getItem(KEY);
+  try{localStorage.removeItem("siramiz-v1");localStorage.removeItem("siramiz-v2")}catch(e){}
+  try{var r=sessionStorage.getItem(KEY);
     if(r){var d=JSON.parse(r);
       if(d&&d.classes&&d.classes.length){S=Object.assign(S,d);S.classes.forEach(function(c){fit(c)});if(S.cur>=S.classes.length)S.cur=0;return}}
-    var o=localStorage.getItem("siramiz-v1");
-    if(o){var v=JSON.parse(o),m=v.lay==="tekli"?[6,5,1]:v.lay==="grup"?[5,1,6]:[3,5,2];
-      S.classes=[mk(v.title||"Sınıf 1",m[0],m[1],m[2],(v.seats||[]).map(function(s){return{photo:s.photo||"",name:s.name||"",note:""}}))];return}
   }catch(e){}
   S.classes=[mk("Sınıf 1",3,5,2)];
 }
 function save(){clearTimeout(saveT);saveT=setTimeout(function(){
-  try{localStorage.setItem(KEY,JSON.stringify(S))}
+  try{sessionStorage.setItem(KEY,JSON.stringify(S))}
   catch(e){say("Tarayıcı kaydedemedi (hafıza dolu). Yedekle düğmesiyle dosya olarak saklayın.")}},400)}
 function shrink(file,cb){
   var fr=new FileReader();
@@ -167,10 +176,19 @@ function theme(){var p=T[S.theme]||T.yesil,r=document.documentElement.style;
 function head(){var c=cur(),h=$("phead");h.innerHTML="";
   [S.school,c.name,S.teacher?"Öğretmen: "+S.teacher:""].forEach(function(t){var d=document.createElement("div");d.textContent=t;h.appendChild(d)})}
 
+function tap(i,e){
+  var s=cur().seats[i];
+  if(picked===null){
+    if(!s.photo)return;
+    e.preventDefault();picked=i;
+    say((i+1)+". öğrenci seçildi. Yerini değiştireceğiniz kutuya dokunun (boş kutuya da taşıyabilirsiniz). İptal için aynı fotoğrafa tekrar dokunun.");render();return}
+  e.preventDefault();
+  if(picked===i){picked=null;say("");render()}
+  else{var a=picked;picked=null;say((a+1)+" ile "+(i+1)+". kutular yer değiştirdi.");swapSeats(a,i)}
+}
 function seatEl(i){
   var s=cur().seats[i],d=document.createElement("div");
   d.className="seat"+(picked===i?" sel":"");d.dataset.i=i;
-  if(window.matchMedia&&matchMedia("(pointer:fine)").matches)d.draggable=true;
   var ph=document.createElement("div");ph.className="ph";
   if(s.photo){ph.style.backgroundImage="url("+s.photo+")";ph.classList.add("has")}else ph.innerHTML="<b>+</b>";
   var no=document.createElement("span");no.className="no";no.textContent=i+1;ph.appendChild(no);
@@ -178,25 +196,25 @@ function seatEl(i){
   inp.setAttribute("aria-label",(i+1)+". öğrenci fotoğrafı seç");
   inp.addEventListener("change",function(){var f=inp.files&&inp.files[0];if(!f)return;
     shrink(f,function(u){cur().seats[i].photo=u;save();render()})});
-  inp.addEventListener("click",function(e){
-    if(!swapMode)return;e.preventDefault();
-    if(picked===null){picked=i;say((i+1)+". kutu seçildi. Yerini değiştireceğiniz kutuya dokunun.");render()}
-    else if(picked===i){picked=null;say("");render()}
-    else{var a=picked;picked=null;say((a+1)+" ile "+(i+1)+". kutular yer değiştirdi.");swapSeats(a,i)}});
-  ph.appendChild(inp);d.appendChild(ph);
+  ph.appendChild(inp);
+  inp.addEventListener("click",function(e){tap(i,e)});
+  if(s.photo){var rp=document.createElement("label");rp.className="rp";rp.textContent="📷";
+    var ri=document.createElement("input");ri.type="file";ri.accept="image/*";ri.className="fin";
+    ri.setAttribute("aria-label",(i+1)+". öğrenci fotoğrafını değiştir");
+    ri.addEventListener("click",function(e){if(picked!==null)tap(i,e)});
+    ri.addEventListener("change",function(){var f=ri.files&&ri.files[0];if(!f)return;
+      shrink(f,function(u){cur().seats[i].photo=u;save();render()})});
+    rp.appendChild(ri);ph.appendChild(rp)}
+  if(s.photo){var x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";
+    x.setAttribute("aria-label","Fotoğrafı kaldır");
+    x.addEventListener("click",function(){cur().seats[i].photo="";save();render()});ph.appendChild(x)}
+  d.appendChild(ph);
   var nm=document.createElement("input");nm.type="text";nm.className="nm";nm.placeholder="Ad Soyad";nm.value=s.name;
   nm.setAttribute("aria-label",(i+1)+". öğrenci adı");
   nm.addEventListener("input",function(){cur().seats[i].name=nm.value;save()});d.appendChild(nm);
   var nt=document.createElement("input");nt.type="text";nt.className="nt";nt.placeholder="Not";nt.maxLength=40;nt.value=s.note||"";
   nt.setAttribute("aria-label",(i+1)+". öğrenci notu");
   nt.addEventListener("input",function(){cur().seats[i].note=nt.value;save()});d.appendChild(nt);
-  if(s.photo){var x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";
-    x.setAttribute("aria-label","Fotoğrafı kaldır");
-    x.addEventListener("click",function(){cur().seats[i].photo="";save();render()});d.appendChild(x)}
-  d.addEventListener("dragstart",function(){dragFrom=i});
-  d.addEventListener("dragover",function(e){e.preventDefault();d.classList.add("over")});
-  d.addEventListener("dragleave",function(){d.classList.remove("over")});
-  d.addEventListener("drop",function(e){e.preventDefault();if(dragFrom!==null&&dragFrom!==i)swapSeats(dragFrom,i);dragFrom=null});
   return d}
 
 function render(){
@@ -206,10 +224,14 @@ function render(){
   S.classes.forEach(function(x,j){var o=document.createElement("option");o.value=j;o.textContent=x.name||"Sınıf";sel.appendChild(o)});
   sel.value=S.cur;sel.hidden=S.classes.length<2;$("r2c").style.gridTemplateColumns=S.classes.length<2?"1fr":"1fr 1fr";
   $("title").value=c.name;$("school").value=S.school;$("teacher").value=S.teacher;
-  $("pano").checked=S.pano;$("lp").value=S.lp;$("lt").value=S.lt;$("lb").value=S.lb;$("cn").value=c.name;$("win").value=S.win;$("thm").value=S.theme;
+  $("pp").value=S.pp;$("tp").value=S.tp;$("ori").value=S.ori;$("lp").value=S.lp;$("lt").value=S.lt;$("lb").value=S.lb;$("cn").value=c.name;$("win").value=S.win;$("thm").value=S.theme;
   Array.prototype.forEach.call(document.querySelectorAll(".st"),function(st){st.querySelector(".v").textContent=c[st.dataset.k]});
-  $("panoEl").style.display=S.pano?"":"none";
   $("wl").style.display=S.win==="sol"?"":"none";$("wr").style.display=S.win==="sag"?"":"none";
+  [[$("panoEl"),S.pp],[$("tdeskEl"),S.tp]].forEach(function(a){var el=a[0],p=a[1];
+    if(p==="yok"){el.style.display="none";return}
+    el.style.display="";
+    if(p==="arka"){$("backRow").appendChild(el);el.style.order=0}
+    else{$("frontRow").appendChild(el);el.style.order=p==="sol"?0:2}});
   L.innerHTML="";L.style.gridTemplateColumns="repeat("+c.cols+",1fr)";
   for(d=0;d<c.cols*c.rows;d++){
     g=document.createElement("div");g.className="grp fx";g.dataset.k="grp";
@@ -223,8 +245,8 @@ function render(){
 
 function drawCanvas(done){
   try{
-    var c=cur(),P=T[S.theme]||T.yesil,sc=2,fl=$("floor"),fr=fl.getBoundingClientRect(),top=76;
-    var pad=16,W=Math.round(fr.width)+2*pad,H=Math.round(fr.height)+top+36;
+    var c=cur(),P=T[S.theme]||T.yesil,sc=3,fl=$("floor"),fr=fl.getBoundingClientRect(),top=76;
+    var pad=16,W=Math.round(fr.width)+2*pad,H=Math.round(fr.height)+top+36;sc=Math.min(3,Math.sqrt(12000000/(W*H)));
     var cv=document.createElement("canvas");cv.width=W*sc;cv.height=H*sc;
     var x=cv.getContext("2d");x.scale(sc,sc);
     var F='"Nunito","Segoe UI",system-ui,sans-serif';
@@ -266,23 +288,43 @@ function drawCanvas(done){
       done(cv)});
   }catch(e){done(null)}
 }
+function a4(cv){
+  var land=S.ori==="yat"?true:S.ori==="oto"?cv.width>=cv.height:false,
+      W=land?2339:1654,H=land?1654:2339,m=Math.round(Math.min(W,H)*0.045);
+  var o=document.createElement("canvas");o.width=W;o.height=H;var x=o.getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,W,H);
+  var k=Math.min((W-2*m)/cv.width,(H-2*m)/cv.height),w=cv.width*k,h=cv.height*k;
+  x.imageSmoothingQuality="high";x.drawImage(cv,(W-w)/2,(H-h)/2,w,h);
+  return{c:o,land:land}
+}
+var ob=null,onm="";
+function showOv(bl,name){
+  ob=bl;onm=name;var im=$("oimg");
+  if(im.dataset.u)URL.revokeObjectURL(im.dataset.u);
+  var u=URL.createObjectURL(bl);im.dataset.u=u;im.src=u;
+  try{var f=new File([bl],name,{type:"image/png"});$("osh").hidden=!(navigator.canShare&&navigator.canShare({files:[f]}))}
+  catch(e){$("osh").hidden=true}
+  $("ov").hidden=false}
 function exportPng(){
   drawCanvas(function(cv){
     if(!cv){say("Resim oluşturulamadı.");return}
-    cv.toBlob(function(bl){dl(bl,((cur().name||"oturma-duzeni").replace(/[\\\/:*?"<>|]+/g,""))+".png");say("Resim indirildi.")},"image/png")})
+    a4(cv).c.toBlob(function(bl){
+      if(!bl){say("Resim oluşturulamadı.");return}
+      showOv(bl,((cur().name||"oturma-duzeni").replace(/[\\\/:*?"<>|]+/g,""))+".png");
+      say("Resim hazır. Aşağıdaki düğmelerle kaydedin.")},"image/png")})
 }
 function printPng(){
   say("Yazdırma için hazırlanıyor…");
   drawCanvas(function(cv){
     if(!cv){say("Hazırlanamadı. Resim olarak indirip yazdırabilirsiniz.");return}
-    var land=cv.width>=cv.height,im=$("pimg");
-    $("pgst").textContent="@media print{@page{size:A4 "+(land?"landscape":"portrait")+";margin:8mm}#pwrap img{max-height:"+(land?"192mm":"279mm")+"}}";
+    var r=a4(cv),im=$("pimg");
+    $("pgst").textContent="@media print{@page{size:A4 "+(r.land?"landscape":"portrait")+";margin:0}#pwrap img{width:"+(r.land?"295mm":"208mm")+";height:auto}}";
     im.onload=function(){document.body.classList.add("printing");say("");
       setTimeout(function(){
         try{window.print()}catch(e){say("Yazdırma açılamadı. Resim olarak indirip yazdırabilirsiniz.")}
         document.addEventListener("pointerdown",function f(){document.body.classList.remove("printing");document.removeEventListener("pointerdown",f)})
       },300)};
-    im.removeAttribute("src");im.src=cv.toDataURL("image/jpeg",0.92)})
+    im.removeAttribute("src");im.src=r.c.toDataURL("image/jpeg",0.92)})
 }
 
 Array.prototype.forEach.call(document.querySelectorAll(".st"),function(st){
@@ -305,7 +347,9 @@ $("lb").addEventListener("input",function(){S.lb=this.value;save()});
 $("cls").addEventListener("change",function(){S.cur=+this.value;prev=null;$("undo").hidden=true;picked=null;save();render()});
 $("lp").addEventListener("input",function(){S.lp=this.value;save()});
 $("lt").addEventListener("input",function(){S.lt=this.value;save()});
-$("pano").addEventListener("change",function(){S.pano=this.checked;save();render()});
+$("pp").addEventListener("change",function(){S.pp=this.value;save();render()});
+$("tp").addEventListener("change",function(){S.tp=this.value;save();render()});
+$("ori").addEventListener("change",function(){S.ori=this.value;save()});
 $("win").addEventListener("change",function(){S.win=this.value;save();render()});
 $("thm").addEventListener("change",function(){S.theme=this.value;save();render()});
 
@@ -327,9 +371,6 @@ $("shuf").addEventListener("click",function(){
   $("undo").hidden=false;say("Öğrenciler karıştırıldı. Beğenmezseniz Geri al'a basın.");save();render()});
 $("undo").addEventListener("click",function(){
   if(!prev)return;cur().seats=prev;prev=null;this.hidden=true;save();render();say("Önceki düzen geri yüklendi.")});
-$("swap").addEventListener("click",function(){
-  swapMode=!swapMode;picked=null;this.textContent="Yer değiştir: "+(swapMode?"açık":"kapalı");
-  this.className=swapMode?"on":"";say(swapMode?"İki kutuya sırayla dokunarak yerlerini değiştirin.":"");render()});
 $("png").addEventListener("click",exportPng);
 $("print").addEventListener("click",printPng);
 $("bk").addEventListener("click",function(){
@@ -338,7 +379,7 @@ $("rs").addEventListener("change",function(){
   var inp=this,f=inp.files&&inp.files[0];if(!f)return;
   var r=new FileReader();
   r.onload=function(){try{var d=JSON.parse(r.result);if(!d.classes||!d.classes.length)throw 0;
-    S=Object.assign({classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA"},d);
+    S=Object.assign({classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik"},d);
     S.classes.forEach(function(c){c.seats=c.seats||[];fit(c)});S.cur=0;prev=null;save();render();say("Yedek yüklendi.")}
     catch(e){say("Bu dosya geçerli bir Sıramız yedeği değil.")}};
   r.readAsText(f);inp.value=""});
@@ -348,8 +389,18 @@ $("clear").addEventListener("click",function(){var b=this;
   armClr=false;b.textContent="Temizle";var c=cur();c.seats=[];fit(c);prev=null;$("undo").hidden=true;
   save();render();say("Bu sınıfın fotoğraf ve isimleri temizlendi.")});
 
+$("ocl").addEventListener("click",function(){$("ov").hidden=true});
+$("odl").addEventListener("click",function(){if(ob)dl(ob,onm)});
+$("osh").addEventListener("click",function(){
+  try{navigator.share({files:[new File([ob],onm,{type:"image/png"})],title:onm}).catch(function(){})}catch(e){if(ob)dl(ob,onm)}});
+var dla=$("dlapp");
+if(location.protocol==="file:")dla.hidden=true;
+else dla.addEventListener("click",function(e){e.preventDefault();
+  fetch(location.href).then(function(r){return r.text()}).then(function(t){
+    dl(new Blob([t],{type:"text/html"}),"siramiz.html");say("İnternetsiz kopya indirildi. Bu dosyayı internet olmadan da açabilirsiniz.")})
+  .catch(function(){say("İndirilemedi. Tarayıcı menüsünden Farklı kaydet seçeneğini deneyin.")})});
 load();render();
-say("Hazır. Bir kutudaki + işaretine dokunarak fotoğraf ekleyin. Veriler yalnızca bu cihazda saklanır.");
+say("Hazır. Bir kutudaki + işaretine dokunarak fotoğraf ekleyin. Veriler sekmeyi kapatınca silinir.");
 })();
 </script>
 </body>
