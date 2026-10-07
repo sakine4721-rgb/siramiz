@@ -48,11 +48,11 @@ button:focus-visible,select:focus-visible,input:focus-visible,.btn:focus-within{
 .back .pano,.back .tdesk{flex:0 1 38%}
 footer a{color:var(--a)}
 .layout{display:grid;gap:12px 14px}
-.grp{display:grid;gap:5px;background:var(--d);border:2px solid var(--de);padding:5px;border-radius:8px}
-.seat{position:relative;background:var(--card);border-radius:6px;padding:4px;text-align:center;min-width:0}
+.grp{display:grid;gap:4px;background:var(--d);border:2px solid var(--de);padding:4px;border-radius:8px}
+.seat{position:relative;background:var(--card);border-radius:6px;padding:3px;text-align:center;min-width:0}
 .seat.over{outline:3px dashed var(--a)}
 .seat.sel{outline:3px solid #e0a100}
-.ph{aspect-ratio:3/4;width:100%;border-radius:4px;background:var(--bg) center/cover no-repeat;border:1px dashed var(--line);display:grid;place-items:center;color:var(--muted);position:relative;overflow:hidden}
+.ph{aspect-ratio:var(--ar,0.75);width:100%;border-radius:4px;background:var(--bg) center/cover no-repeat;border:1px dashed var(--line);display:grid;place-items:center;color:var(--muted);position:relative;overflow:hidden}
 .ph.has{border:2px solid var(--a)}
 .ph b{font-size:1.4rem}
 .no{position:absolute;top:3px;left:4px;font-size:.7rem;font-weight:800;color:var(--muted);background:var(--card);border-radius:4px;padding:0 4px;pointer-events:none}
@@ -99,6 +99,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
     <select id="pp" aria-label="Pano yeri"><option value="sol">Pano: tahtanın solu</option><option value="sag">Pano: tahtanın sağı</option><option value="arka">Pano: sınıfın arkası</option><option value="yok">Pano yok</option></select>
     <select id="tp" aria-label="Öğretmen masası yeri"><option value="sol">Öğretmen masası: solda</option><option value="sag">Öğretmen masası: sağda</option><option value="arka">Öğretmen masası: arkada</option><option value="yok">Öğretmen masası yok</option></select>
     <select id="ori" aria-label="Çıktı yönü"><option value="dik">Çıktı: A4 dikey</option><option value="yat">Çıktı: A4 yatay</option><option value="oto">Çıktı: otomatik</option></select>
+    <select id="zm" aria-label="Fotoğraf yakınlığı"><option value="1">Fotoğraf: normal</option><option value="1.4">Fotoğraf: yakın</option><option value="1.8">Fotoğraf: daha yakın</option><option value="2.2">Fotoğraf: en yakın</option></select>
     <select id="thm" aria-label="Renk teması"><option value="yesil">Yeşil tema</option><option value="mavi">Mavi tema</option><option value="mor">Mor tema</option><option value="turuncu">Turuncu tema</option></select>
   </div>
 </div>
@@ -137,7 +138,7 @@ footer{text-align:center;color:var(--muted);font-size:.78rem;margin-top:14px}
 var KEY="siramiz-v2";
 var T={yesil:{a:"#2f5d50",bd:"#2f5d50",d:"#d9b98a",de:"#b8935f"},mavi:{a:"#2b5c8a",bd:"#25496b",d:"#cfc3a8",de:"#a89a78"},
   mor:{a:"#6b4a8e",bd:"#4a3566",d:"#dcc7a0",de:"#b39a6b"},turuncu:{a:"#c25a1a",bd:"#3c4a45",d:"#e0c08a",de:"#b8935f"}};
-var S={classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik"};
+var S={classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik",zoom:1};
 var prev=null,swapMode=false,picked=null,dragFrom=null,armDel=false,armClr=false,saveT=null;
 function $(i){return document.getElementById(i)}
 function say(t){$("msg").textContent=t}
@@ -161,7 +162,7 @@ function shrink(file,cb){
   fr.onerror=function(){say("Fotoğraf okunamadı: "+file.name);cb("")};
   fr.onload=function(){var im=new Image();
     im.onerror=function(){say("Bu fotoğraf biçimi desteklenmiyor: "+file.name+". JPG veya PNG deneyin.");cb("")};
-    im.onload=function(){var W=240,H=320,ar=W/H,sw=im.width,sh=im.height,sx=0,sy=0;
+    im.onload=function(){var W=420,H=560,ar=W/H,sw=im.width,sh=im.height,sx=0,sy=0;
       if(sw/sh>ar){var nw=sh*ar;sx=(sw-nw)/2;sw=nw}else{var nh=sw/ar;sy=(sh-nh)*0.2;sh=nh}
       var c=document.createElement("canvas");c.width=W;c.height=H;
       c.getContext("2d").drawImage(im,sx,sy,sw,sh,0,0,W,H);
@@ -176,6 +177,7 @@ function theme(){var p=T[S.theme]||T.yesil,r=document.documentElement.style;
 function head(){var c=cur(),h=$("phead");h.innerHTML="";
   [S.school,c.name,S.teacher?"Öğretmen: "+S.teacher:""].forEach(function(t){var d=document.createElement("div");d.textContent=t;h.appendChild(d)})}
 
+function zt(z){return Math.max(0,Math.min(1-1/z,0.38-0.5/z))}
 function tap(i,e){
   var s=cur().seats[i];
   if(picked===null){
@@ -190,7 +192,8 @@ function seatEl(i){
   var s=cur().seats[i],d=document.createElement("div");
   d.className="seat"+(picked===i?" sel":"");d.dataset.i=i;
   var ph=document.createElement("div");ph.className="ph";
-  if(s.photo){ph.style.backgroundImage="url("+s.photo+")";ph.classList.add("has")}else ph.innerHTML="<b>+</b>";
+  if(s.photo){ph.style.backgroundImage="url("+s.photo+")";ph.classList.add("has");var z=S.zoom||1;
+    if(z>1){ph.style.backgroundSize=(z*100)+"% auto";ph.style.backgroundPosition="50% "+(zt(z)*z/(z-1)*100)+"%"}}else ph.innerHTML="<b>+</b>";
   var no=document.createElement("span");no.className="no";no.textContent=i+1;ph.appendChild(no);
   var inp=document.createElement("input");inp.type="file";inp.accept="image/*";inp.className="fin";
   inp.setAttribute("aria-label",(i+1)+". öğrenci fotoğrafı seç");
@@ -212,9 +215,6 @@ function seatEl(i){
   var nm=document.createElement("input");nm.type="text";nm.className="nm";nm.placeholder="Ad Soyad";nm.value=s.name;
   nm.setAttribute("aria-label",(i+1)+". öğrenci adı");
   nm.addEventListener("input",function(){cur().seats[i].name=nm.value;save()});d.appendChild(nm);
-  var nt=document.createElement("input");nt.type="text";nt.className="nt";nt.placeholder="Not";nt.maxLength=40;nt.value=s.note||"";
-  nt.setAttribute("aria-label",(i+1)+". öğrenci notu");
-  nt.addEventListener("input",function(){cur().seats[i].note=nt.value;save()});d.appendChild(nt);
   return d}
 
 function render(){
@@ -224,7 +224,7 @@ function render(){
   S.classes.forEach(function(x,j){var o=document.createElement("option");o.value=j;o.textContent=x.name||"Sınıf";sel.appendChild(o)});
   sel.value=S.cur;sel.hidden=S.classes.length<2;$("r2c").style.gridTemplateColumns=S.classes.length<2?"1fr":"1fr 1fr";
   $("title").value=c.name;$("school").value=S.school;$("teacher").value=S.teacher;
-  $("pp").value=S.pp;$("tp").value=S.tp;$("ori").value=S.ori;$("lp").value=S.lp;$("lt").value=S.lt;$("lb").value=S.lb;$("cn").value=c.name;$("win").value=S.win;$("thm").value=S.theme;
+  $("pp").value=S.pp;$("tp").value=S.tp;$("ori").value=S.ori;$("zm").value=String(S.zoom||1);$("lp").value=S.lp;$("lt").value=S.lt;$("lb").value=S.lb;$("cn").value=c.name;$("win").value=S.win;$("thm").value=S.theme;
   Array.prototype.forEach.call(document.querySelectorAll(".st"),function(st){st.querySelector(".v").textContent=c[st.dataset.k]});
   $("wl").style.display=S.win==="sol"?"":"none";$("wr").style.display=S.win==="sag"?"":"none";
   [[$("panoEl"),S.pp],[$("tdeskEl"),S.tp]].forEach(function(a){var el=a[0],p=a[1];
@@ -246,12 +246,19 @@ function render(){
 function drawCanvas(done){
   try{
     var c=cur(),P=T[S.theme]||T.yesil,sc=3,top=76,
-        base=S.ori==="yat"?1100:S.ori==="oto"?900:760,
+        land=S.ori==="yat"||(S.ori==="oto"&&c.cols*c.per>=c.rows*2),base=land?1100:760,
         wrap=document.createElement("div"),fl=$("floor").cloneNode(true),fr;
     wrap.style.cssText="position:fixed;left:-20000px;top:0;visibility:hidden;width:"+Math.max(base,c.cols*c.per*64+60)+"px";
     Array.prototype.forEach.call(fl.querySelectorAll("[id]"),function(e){e.removeAttribute("id")});
     fl.removeAttribute("id");fl.style.minWidth="0";fl.style.maxWidth="none";fl.style.width="100%";
-    wrap.appendChild(fl);document.body.appendChild(wrap);fr=fl.getBoundingClientRect();
+    wrap.appendChild(fl);document.body.appendChild(wrap);
+    function meas(q){fl.style.setProperty("--ar",q);return fl.getBoundingClientRect().height}
+    fr=fl.getBoundingClientRect();
+    var PW=land?2339:1654,PH=land?1654:2339,mm=Math.round(Math.min(PW,PH)*0.045),Rt=(PW-2*mm)/(PH-2*mm),
+        Wc=fr.width+32,h1=meas(0.75),h2=meas(0.55),Bc=(h2-h1)/(1/0.55-1/0.75);
+    if(Bc>1){var inv=(Wc/Rt-top-36-(h1-Bc/0.75))/Bc,ar2=Math.max(0.5,Math.min(1.1,1/inv));meas(isFinite(ar2)?ar2:0.75)}
+    else meas(0.75);
+    fr=fl.getBoundingClientRect();
     var pad=16,W=Math.round(fr.width)+2*pad,H=Math.round(fr.height)+top+36;sc=Math.min(3,Math.sqrt(12000000/(W*H)));
     var cv=document.createElement("canvas");cv.width=W*sc;cv.height=H*sc;
     var x=cv.getContext("2d");x.scale(sc,sc);
@@ -275,16 +282,17 @@ function drawCanvas(done){
     var jobs=[];
     Array.prototype.forEach.call(fl.querySelectorAll(".seat"),function(se){
       var i=+se.dataset.i,s=c.seats[i];box(se,"#fff","#c9d1d9",6);
-      var pr=rel(se.querySelector(".ph")),nr=rel(se.querySelector(".nm")),tr=rel(se.querySelector(".nt"));
+      var pr=rel(se.querySelector(".ph")),nr=rel(se.querySelector(".nm"));
       rp(pr,5);x.fillStyle="#eef1f4";x.fill();x.strokeStyle=P.a;x.lineWidth=2.5;x.stroke();
-      x.textAlign="center";x.fillStyle="#1f2933";x.font="700 "+Math.max(9,Math.min(13,pr.w/7))+"px "+F;
-      x.fillText(s.name||"",nr.x+nr.w/2,nr.y+nr.h/2+4,nr.w);
-      x.fillStyle="#5d6b78";x.font="600 "+Math.max(8,Math.min(11,pr.w/9))+"px "+F;
-      x.fillText(s.note||"",tr.x+tr.w/2,tr.y+tr.h/2+4,tr.w);
+      x.textAlign="center";x.fillStyle="#1f2933";
+      var fz=Math.max(10,Math.min(15,pr.w/6.5)),nmz=s.name||"";x.font="800 "+fz+"px "+F;
+      while(fz>7&&x.measureText(nmz).width>nr.w-4){fz-=0.5;x.font="800 "+fz+"px "+F}
+      x.fillText(nmz,nr.x+nr.w/2,nr.y+nr.h/2+fz*0.35);
       x.textAlign="left";x.font="800 10px "+F;x.fillText(String(i+1),pr.x+4,pr.y+12);
       if(s.photo)jobs.push(new Promise(function(ok){var im=new Image();
         im.onload=function(){var ar=pr.w/pr.h,sw=im.width,sh=im.height,sx=0,sy=0;
-          if(sw/sh>ar){var nw=sh*ar;sx=(sw-nw)/2;sw=nw}else{var nh=sw/ar;sy=(sh-nh)/2;sh=nh}
+          if(sw/sh>ar){var nw=sh*ar;sx=(sw-nw)/2;sw=nw}else{var nh=sw/ar;sy=(sh-nh)*0.2;sh=nh}
+          var z=S.zoom||1;if(z>1){var q=zt(z);sx+=(sw-sw/z)/2;sy+=sh*q;sw/=z;sh/=z}
           x.save();rp(pr,5);x.clip();x.drawImage(im,sx,sy,sw,sh,pr.x,pr.y,pr.w,pr.h);x.restore();rp(pr,5);x.strokeStyle=P.a;x.lineWidth=2.5;x.stroke();
           x.fillStyle="rgba(255,255,255,.85)";x.fillRect(pr.x+2,pr.y+2,16,14);
           x.fillStyle="#1f2933";x.font="800 10px "+F;x.textAlign="left";x.fillText(String(i+1),pr.x+5,pr.y+13);ok()};
@@ -292,12 +300,11 @@ function drawCanvas(done){
     if(wrap.parentNode)wrap.parentNode.removeChild(wrap);
     Promise.all(jobs).then(function(){
       x.fillStyle="#5d6b78";x.font="12px "+F;x.textAlign="center";x.fillText("© 2026 Sakine – Sıramız",W/2,H-9);
-      done(cv)});
+      done(cv,land)});
   }catch(e){try{if(wrap&&wrap.parentNode)wrap.parentNode.removeChild(wrap)}catch(e2){}done(null)}
 }
-function a4(cv){
-  var land=S.ori==="yat"?true:S.ori==="oto"?cv.width>=cv.height:false,
-      W=land?2339:1654,H=land?1654:2339,m=Math.round(Math.min(W,H)*0.045);
+function a4(cv,land){
+  var W=land?2339:1654,H=land?1654:2339,m=Math.round(Math.min(W,H)*0.045);
   var o=document.createElement("canvas");o.width=W;o.height=H;var x=o.getContext("2d");
   x.fillStyle="#fff";x.fillRect(0,0,W,H);
   var k=Math.min((W-2*m)/cv.width,(H-2*m)/cv.height),w=cv.width*k,h=cv.height*k;
@@ -313,18 +320,18 @@ function showOv(bl,name){
   catch(e){$("osh").hidden=true}
   $("ov").hidden=false}
 function exportPng(){
-  drawCanvas(function(cv){
+  drawCanvas(function(cv,land){
     if(!cv){say("Resim oluşturulamadı.");return}
-    a4(cv).c.toBlob(function(bl){
+    a4(cv,land).c.toBlob(function(bl){
       if(!bl){say("Resim oluşturulamadı.");return}
       showOv(bl,((cur().name||"oturma-duzeni").replace(/[\\\/:*?"<>|]+/g,""))+".png");
       say("Resim hazır. Aşağıdaki düğmelerle kaydedin.")},"image/png")})
 }
 function printPng(){
   say("Yazdırma için hazırlanıyor…");
-  drawCanvas(function(cv){
+  drawCanvas(function(cv,land){
     if(!cv){say("Hazırlanamadı. Resim olarak indirip yazdırabilirsiniz.");return}
-    var r=a4(cv),im=$("pimg");
+    var r=a4(cv,land),im=$("pimg");
     $("pgst").textContent="@media print{@page{size:A4 "+(r.land?"landscape":"portrait")+";margin:0}#pwrap img{width:"+(r.land?"295mm":"208mm")+";height:auto}}";
     im.onload=function(){document.body.classList.add("printing");say("");
       setTimeout(function(){
@@ -357,6 +364,7 @@ $("lt").addEventListener("input",function(){S.lt=this.value;save()});
 $("pp").addEventListener("change",function(){S.pp=this.value;save();render()});
 $("tp").addEventListener("change",function(){S.tp=this.value;save();render()});
 $("ori").addEventListener("change",function(){S.ori=this.value;save()});
+$("zm").addEventListener("change",function(){S.zoom=parseFloat(this.value)||1;save();render()});
 $("win").addEventListener("change",function(){S.win=this.value;save();render()});
 $("thm").addEventListener("change",function(){S.theme=this.value;save();render()});
 
@@ -386,7 +394,7 @@ $("rs").addEventListener("change",function(){
   var inp=this,f=inp.files&&inp.files[0];if(!f)return;
   var r=new FileReader();
   r.onload=function(){try{var d=JSON.parse(r.result);if(!d.classes||!d.classes.length)throw 0;
-    S=Object.assign({classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik"},d);
+    S=Object.assign({classes:[],cur:0,school:"",teacher:"",theme:"yesil",pano:true,win:"sol",lp:"PANO",lt:"Öğretmen masası",lb:"TAHTA",pp:"sol",tp:"sag",ori:"dik",zoom:1},d);
     S.classes.forEach(function(c){c.seats=c.seats||[];fit(c)});S.cur=0;prev=null;save();render();say("Yedek yüklendi.")}
     catch(e){say("Bu dosya geçerli bir Sıramız yedeği değil.")}};
   r.readAsText(f);inp.value=""});
